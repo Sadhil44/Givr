@@ -1,45 +1,60 @@
-# Givr - Swipe to Give Back
+# Givr
 
-A Tinder-style volunteer discovery app for CMU students built with cmu_graphics.
+**Swipe to give back.**
 
 ## Award Categories
-- Best UI/UX
-- Most Impactful
 
-## External Modules
-- **cmu_graphics** (bundled in project) - No additional installation needed
-
-## How to Run
-```bash
-python main.py
-```
+- Grand Prize
+- Social Impact Track
 
 ## Description
-Givr makes finding volunteer opportunities as easy as swiping through a dating app. Users can:
-- Set preferences for cause categories and time availability
-- Swipe through curated volunteer events (right to save, left to skip)
-- Browse all events in a list view with filtering
-- View saved events and track completion status
-- See events on a stylized map of Pittsburgh
-- Earn points, badges, and tier progression through verified volunteering
+
+Givr is a Tinder-style volunteer matching app that connects users with meaningful volunteer opportunities in their community. Users can swipe through events, save opportunities they're interested in, and track their volunteer hours and impact.
+
+**Key Features:**
+- Swipe-based interface for discovering volunteer events
+- AI-powered event generation that learns from your preferences
+- Category-based filtering (Environment, Education, Community, Health, Arts)
+- Save events and track volunteer hours
+- Rewards system for volunteer participation
+- Organization portal for posting events
+
+The AI learns what types of events you like based on your swipes and generates new personalized opportunities, similar to how Tinder's algorithm works.
+
+## External Modules
+
+**Required:** `cmu_graphics`
+
+Install with:
+```
+pip install cmu-graphics
+```
+
+## How to Run
+
+Navigate to the project folder and run:
+
+```
+python "mayurStuff/givr_app (3).py"
+```
 
 ## Controls
 
-### Navigation
-- Click tabs at the bottom to switch between screens
-- Keyboard shortcuts: 1-5 for quick navigation
+**Swipe Screen:**
+- Click and drag cards left/right to swipe
+- Click the X button to skip an event
+- Click the heart button to save an event
+- Use arrow keys (Left/Right) to swipe
+- Press Enter to save current event
 
-### Swiping
-- Drag cards left/right with mouse to skip/save
-- Arrow keys (left/right) also work for swiping
+**Navigation:**
+- Use the bottom navigation bar to switch between Swipe, Browse, Saved, and Profile tabs
+- Click events in list views to see details
 
-### Verification
-- After attending an event, mark it "Complete" in Saved
-- Enter the 4-letter verification code to confirm attendance
-- Codes for testing: PARK, TUTR, FOOD, CARE, ARTS, etc.
+**Account:**
+- Create an account as a Volunteer or Organization
+- Organizations can create and manage their own events
 
-## Project Structure
-- `main.py` - Main UI using cmu_graphics (entry point)
-- `givr_model.py` - Data structures and event loading
-- `givr_logic.py` - App state, rewards, and game logic
-- `data/events.json` - Sample volunteer event data
+## Team
+
+Built for 15-112 at Carnegie Mellon University
