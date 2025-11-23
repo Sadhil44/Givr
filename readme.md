@@ -35,7 +35,7 @@ pip install cmu-graphics
 Navigate to the project folder and run:
 
 ```
-python "mayurStuff/givr_app (3).py"
+python "src/givrApp.py"
 ```
 
 ## Controls
