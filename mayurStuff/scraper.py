@@ -28,8 +28,33 @@ def scrapeEvents(location='Pittsburgh, PA'):
     print(f"Loading {url}...")
     driver.get(url)
 
-    # Wait for page to load (Points of Light uses dynamic loading)
-    time.sleep(8)
+    # Wait for initial page load
+    time.sleep(5)
+
+    # Infinite scroll to load more events
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    scroll_attempts = 0
+    max_scrolls = 20  # Maximum number of scroll attempts
+
+    while scroll_attempts < max_scrolls:
+        # Scroll to bottom
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(3)  # Wait for content to load
+
+        # Check new height
+        new_height = driver.execute_script("return document.body.scrollHeight")
+
+        if new_height == last_height:
+            # No new content loaded, try one more time
+            scroll_attempts += 1
+            if scroll_attempts >= 3:
+                print(f"No more content after {scroll_attempts} attempts")
+                break
+        else:
+            scroll_attempts = 0  # Reset counter when new content loads
+
+        last_height = new_height
+        print(f"Scrolled... height: {new_height}")
 
     # Get page source and parse with BeautifulSoup
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -39,7 +64,7 @@ def scrapeEvents(location='Pittsburgh, PA'):
 
     print(f"Found {len(listings)} listings")
 
-    for i, listing in enumerate(listings[:10]):
+    for i, listing in enumerate(listings):
         # Extract title from h3 element
         title_elem = listing.find('h3')
         if title_elem:
@@ -54,17 +79,33 @@ def scrapeEvents(location='Pittsburgh, PA'):
         else:
             org = "Local Organization"
 
-        # Extract location from the first p with text-gray-500
-        location_elems = listing.find_all('p', class_='text-gray-500')
+        # Extract location and date/time from p elements with text-gray-500
+        gray_elems = listing.find_all('p', class_='text-gray-500')
         event_location = "Pittsburgh"
-        for elem in location_elems:
+        event_date = "TBD"
+        event_time = "TBD"
+
+        for elem in gray_elems:
             text = elem.get_text(strip=True)
+            # Check for location (contains PA or city name)
             if 'PA' in text or 'Pittsburgh' in text:
                 event_location = text.replace(',', '').strip()
-                break
+            # Check for date/time (contains month names or time patterns)
+            elif any(month in text for month in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
+                # Parse date and time from text like "Nov 21st 6-7pm"
+                parts = text.split()
+                if len(parts) >= 2:
+                    event_date = parts[0] + ' ' + parts[1]  # e.g., "Nov 21st"
+                    if len(parts) >= 3:
+                        event_time = ' '.join(parts[2:])  # e.g., "6-7pm"
+                    else:
+                        event_time = "See details"
+            elif 'Recruiting' in text:
+                event_date = "Ongoing"
+                event_time = "Flexible"
 
         # Use title as description base
-        desc = title[:50] if len(title) > 50 else title
+        desc = title[:35] if len(title) > 35 else title
 
         # Assign category based on keywords
         category = assignCategory(title + ' ' + desc)
@@ -76,14 +117,18 @@ def scrapeEvents(location='Pittsburgh, PA'):
 
         event = {
             'id': i + 100,
-            'title': title[:30],
-            'org': org[:30],
+            'title': title[:20],
+            'fullTitle': title[:50],
+            'org': org[:20],
+            'fullOrg': org[:40],
             'category': category,
-            'desc': desc,
+            'desc': desc[:35],
+            'fullDesc': title[:100],
             'hours': random.randint(2, 5),
-            'date': f"Dec {random.randint(1, 28)}",
-            'time': random.choice(['9AM-12PM', '10AM-1PM', '1PM-4PM', '2PM-5PM']),
-            'location': event_location[:20],
+            'date': event_date,
+            'time': event_time,
+            'location': event_location[:15],
+            'fullLocation': event_location[:30],
             'mapX': random.randint(100, 350),
             'mapY': random.randint(200, 450),
             'impact': random.randint(3, 5),
