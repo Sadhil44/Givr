@@ -1,5 +1,7 @@
 from cmu_graphics import *
 import math
+import json
+import os
 
 # ============================================================================
 # GIVR - Swipe to Give Back
@@ -70,7 +72,7 @@ def onAppStart(app):
     app.experienceLevel = None
 
     # Events data
-    app.events = createSampleEvents()
+    app.events = createEvents()
     app.currentEventIndex = 0
     app.savedEvents = []
     app.completedEvents = []
@@ -106,6 +108,15 @@ def onAppStart(app):
         'five_hours': {'name': '5 Hours', 'unlocked': False},
         'three_locations': {'name': 'Explorer', 'unlocked': False}
     }
+
+def createEvents():
+    if os.path.exists('events.json'):
+        f = open('events.json', 'r')
+        events = json.load(f)
+        f.close()
+        return events
+    else:
+        return createSampleEvents()
 
 def createSampleEvents():
     return [
