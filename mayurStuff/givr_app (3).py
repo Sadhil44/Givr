@@ -1,5 +1,7 @@
 from cmu_graphics import *
 import math
+import os
+import json
 import AI_givr
 
 
@@ -67,7 +69,7 @@ def onAppStart(app):
     app.experienceLevel = None
 
     # Events data
-    app.events = createSampleEvents()
+    app.events = createEvents()
     app.currentEventIndex = 0
     app.savedEvents = []
     app.completedEvents = []
@@ -79,9 +81,9 @@ def onAppStart(app):
     app.cardOffsetX = 0
     app.swipeThreshold = 80
 
-    # AI Event Generation
-    # app.aiEnabled = True
-    # app.minEventsBeforeGenerate = 2  # Generate more when this many events left
+    #AI Event Generation
+    app.aiEnabled = True
+    app.minEventsBeforeGenerate = 2  # Generate more when this many events left
 
     # Detail view
     app.selectedEvent = None
@@ -107,6 +109,15 @@ def onAppStart(app):
         'five_hours': {'name': '5 Hours', 'unlocked': False},
         'three_locations': {'name': 'Explorer', 'unlocked': False}
     }
+
+def createEvents():
+    if os.path.exists('events.json'):
+        f = open('events.json', 'r')
+        events = json.load(f)
+        f.close()
+        return events
+    else:
+        return createSampleEvents()
 
 def createSampleEvents():
     # Each event has an 'icon' that represents the event visually
@@ -177,6 +188,10 @@ def createSampleEvents():
             'impact': 4, 'code': 'MURL', 'icon': 'palette'
         },
     ]
+def saveEvents(events, filename='events.json'):
+    """Save the current events list back to JSON so scraped + AI + organizer events persist."""
+    with open(filename, 'w') as f:
+        json.dump(events, f, indent=2)
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -1750,6 +1765,7 @@ def createNewEvent(app):
 
     # Add to events list
     app.events.append(newEvent)
+    saveEvents(app.events)
 
     # Reset form and go back
     resetCreateEventForm(app)
@@ -2012,6 +2028,34 @@ def attemptVerification(app):
 # AI EVENT GENERATION
 # ============================================================================
 
+def checkAndGenerateEvents(app):
+    """
+    Check how many events are left and, if low, ask the AI to generate more.
+    Also persist the updated events list back to events.json.
+    """
+    remaining = len(app.events) - app.currentEventIndex
+
+    if remaining <= app.minEventsBeforeGenerate:
+        # Generate new personalized events
+        newEvents = AI_givr.generate_new_events(app.events, count=3)
+
+        if not newEvents:
+            return
+
+        # Make sure new events have unique IDs
+        maxId = max((e.get('id', 0) for e in app.events), default=0)
+        nextId = maxId + 1
+        for ev in newEvents:
+            if 'id' not in ev:
+                ev['id'] = nextId
+                nextId += 1
+
+        # Add new events to the list
+        app.events.extend(newEvents)
+
+        # Save back to JSON so they persist (scraped + AI events live together)
+        saveEvents(app.events)
+
 def handleSwipeAction(app, liked):
     """
     Handle a swipe action (right=liked, left=skipped).
@@ -2023,8 +2067,8 @@ def handleSwipeAction(app, liked):
     event = app.events[app.currentEventIndex]
 
     # Record the swipe with AI system
-    # if app.aiEnabled:
-    #     AI_givr.record_swipe(event, liked)
+    if app.aiEnabled:
+        AI_givr.record_swipe(event, liked)
 
     # Save event if liked
     if liked and event not in app.savedEvents:
@@ -2034,22 +2078,8 @@ def handleSwipeAction(app, liked):
     app.currentEventIndex += 1
 
     # Check if we need to generate more events
-    # if app.aiEnabled:
-    #     checkAndGenerateEvents(app)
-
-# def checkAndGenerateEvents(app):
-#     """
-#     Check if we're running low on events and generate more if needed.
-#     """
-#     remaining = len(app.events) - app.currentEventIndex
-
-#     if remaining <= app.minEventsBeforeGenerate:
-#         # Generate new personalized events
-#         newEvents = AI_givr.generate_new_events(app.events, count=3)
-
-#         # Add new events to the list
-#         for event in newEvents:
-#             app.events.append(event)
+    if app.aiEnabled:
+        checkAndGenerateEvents(app)
 
 def main():
     runApp(width=400, height=700)
